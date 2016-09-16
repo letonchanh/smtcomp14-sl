@@ -163,8 +163,13 @@ sl_form_2cyclist (FILE * fout, sl_form_t * form)
       nbc++;
     }
 
-  if (form->space == NULL)
+  if (form->space == NULL) {
+	if (nbc > 0)
+	  fprintf (fout, " * ");
+	fprintf (fout, "emp");
+	fflush (fout);
     return;
+  }
 
   // continue with spatial formulas
   // Only ssep atomic formulas
@@ -306,15 +311,24 @@ sl_prob_2cyclist (const char *fname)
 
   /* Output filename */
   char *fname_out = (char *) malloc (strlen (fname) + 10);
-  snprintf (fname_out, strlen (fname) + 10, "%s.defs", fname);
+  snprintf (fname_out, strlen (fname) + 10, "%s.tst", fname);
+  
+  char *fname_defs = (char *) malloc (strlen (fname) + 10);
+  snprintf (fname_defs, strlen (fname) + 10, "%s.defs", fname);
 
   /* Output file */
   sl_message ("\tOutput file: ");
   sl_message (fname_out);
   FILE *fout = fopen (fname_out, "w");
+  FILE *fdefs = fopen (fname_defs, "w");
   if (!fout)
     {
       printf ("Can not create file '%s'!\nquit.", fname_out);
+      return;
+    }
+  if (!fdefs)
+    {
+      printf ("Can not create file '%s'!\nquit.", fname_defs);
       return;
     }
 
@@ -352,13 +366,13 @@ sl_prob_2cyclist (const char *fname)
         }
     }
 
-  sl_pred_2cyclist (fout, sl_vector_at (preds_array, sl_prob->fst_pid));
+  sl_pred_2cyclist (fdefs, sl_vector_at (preds_array, sl_prob->fst_pid));
 
   for (size_t i = 0; i < sl_vector_size (preds_array); i++)
     if (i != sl_prob->fst_pid)
       {
-        fprintf (fout, ";\n\n");
-        sl_pred_2cyclist (fout, sl_vector_at (preds_array, i));
+        fprintf (fdefs, ";\n\n");
+        sl_pred_2cyclist (fdefs, sl_vector_at (preds_array, i));
       }
 
   // Translates the problem for entailment (cyclist) or sat (slsat)

@@ -33,6 +33,24 @@
 /* Records */
 /* ====================================================================== */
 
+char* sleek_keywords [] = { "par" };
+
+char* trans_sleek_keywords (char* varname) {
+  if (sleek_keywords != NULL)
+  {
+    int len = sizeof(sleek_keywords) / sizeof(sleek_keywords[0]);
+    for(int i = 0; i < len; ++i)
+	{
+		if(strcmp(sleek_keywords[i], varname) == 0)
+		{
+			return strcat(varname, "_k");
+		}
+	}
+	return varname;
+  }
+  else return varname;
+}
+
 void
 sl_record_2sleek (FILE * fout, sl_record_t * r)
 {
@@ -62,7 +80,7 @@ sl_var_2sleek (sl_var_array * args, sl_var_array * lvars, uid_t vid,
   if (inpred && vid == 1)
     return "self";
 
-  if (vid == VNIL_ID)
+  if (vid == VNIL_ID) // VNIL_ID is not correct
     return "null";
 
   uid_t fstlocal = (args == NULL) ? 0 : sl_vector_size (args);
@@ -72,7 +90,9 @@ sl_var_2sleek (sl_var_array * args, sl_var_array * lvars, uid_t vid,
     }
   else
     vname = sl_var_name (args, vid, SL_TYP_RECORD);
-  return (vname[0] == '?') ? vname + 1 : vname;
+  vname = (vname[0] == '?') ? vname + 1 : vname;
+  vname = trans_sleek_keywords(vname);
+  return vname;
 }
 
 
@@ -134,7 +154,7 @@ sl_space_2sleek (FILE * fout, sl_var_array * args, sl_var_array * lvars,
 	  {
 	    uid_t fi = sl_vector_at (form->m.pto.fields, i);
 	    uid_t vi = sl_vector_at (form->m.pto.dest, i);
-	    fprintf (fout, "%s%s:%s", (i > 0) ? "," : "",
+	    fprintf (fout, "%s%s=%s", (i > 0) ? ", " : "",
 		     sl_field_name (fi),
 		     sl_var_2sleek (args, lvars, vi, inpred));
 	  }
@@ -208,6 +228,10 @@ sl_form_2sleek (FILE * fout, sl_form_t * form)
 	  }
 	}
     }
+    else  {
+		fprintf (fout, "emp"); 
+		nbc++; 
+	}
 
   // start with spatial formula
   for (size_t i = 0; i < sl_vector_size (form->pure); i++)
@@ -235,7 +259,7 @@ sl_pred_case_2sleek (FILE * fout, sl_var_array * args, sl_pred_case_t * c)
 
   size_t nbc = 0;
 
-  fprintf (fout, "(");
+  //fprintf (fout, "(");
   // start with existentials
   if (c->lvars != NULL && !sl_vector_empty (c->lvars))
     {
@@ -283,7 +307,7 @@ sl_pred_case_2sleek (FILE * fout, sl_var_array * args, sl_pred_case_t * c)
     nbc++;
   }
 
-  fprintf (fout, ")");
+  //fprintf (fout, ")");
 
   SL_DEBUG ("\t nbc=%zu\n", nbc);
 
@@ -341,7 +365,7 @@ sl_prob_2sleek (const char *fname)
 
   /* Output filename */
   char *fname_out = (char *) malloc (strlen (fname) + 10);
-  snprintf (fname_out, strlen (fname) + 10, "%s.sle", fname);
+  snprintf (fname_out, strlen (fname) + 10, "%s.slk", fname);
 
   /* Output file */
   sl_message ("\tOutput file: ");
